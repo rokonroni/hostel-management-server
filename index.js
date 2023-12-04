@@ -171,15 +171,12 @@ async function run() {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const skip = (page - 1) * pageSize;
-
         const result = await mealsCollection
           .find()
           .skip(skip)
           .limit(pageSize)
           .toArray();
-
         const totalMeals = await mealsCollection.estimatedDocumentCount();
-
         res.send({
           data: result,
           pagination: {
@@ -200,6 +197,7 @@ async function run() {
       const count = await mealsCollection.estimatedDocumentCount();
       res.send({ count });
     });
+    
 
     app.get("/meals/:id", async (req, res) => {
       const id = req.params.id;
@@ -248,6 +246,53 @@ async function run() {
       const menuItem = req.body;
       const result = await reqMealsCollection.insertOne(menuItem);
       res.send(result);
+    });
+
+    app.get("/reqMealsCount", async (req, res) => {
+  try {
+    const userEmail = req.query.userEmail; // Assuming the user email is passed as a query parameter
+    const filter = userEmail ? { userEmail: userEmail } : {}; // Add a filter if userEmail is provided
+
+    const count = await reqMealsCollection.countDocuments(filter);
+    res.send({ count });
+  } catch (error) {
+    console.error("Error fetching reqMeals count:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+    app.delete("/reqMeals/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await reqMealsCollection.deleteOne(query);
+      res.send(result);
+    });
+        app.get("/reqMeals", async (req, res) => {
+      try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const userEmail = req.query.userEmail;
+        const skip = (page - 1) * pageSize;
+        const result = await reqMealsCollection
+          .find({ userEmail: userEmail })
+          .skip(skip)
+          .limit(pageSize)
+          .toArray();
+        const totalMeals = await reqMealsCollection.countDocuments({ userEmail: userEmail });
+        res.send({
+          data: result,
+          pagination: {
+            total: totalMeals,
+            pageSize,
+            current: page,
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching meals:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal server error" });
+      }
     });
 
     app.post("/meal/like/:id", async (req, res) => {
