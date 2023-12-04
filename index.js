@@ -32,6 +32,7 @@ async function run() {
     const userCollection = client.db("hostelDB").collection("users");
     const paymentCollection = client.db("hostelDB").collection("payments");
     const mealsCollection = client.db("hostelDB").collection("meals");
+    const reqMealsCollection = client.db("hostelDB").collection("reqMeals");
     const upcomingMealsCollection = client
       .db("hostelDB")
       .collection("upcomingMeals");
@@ -241,6 +242,11 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await mealsCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.post("/reqMeal", verifyToken, async (req, res) => {
+      const menuItem = req.body;
+      const result = await reqMealsCollection.insertOne(menuItem);
       res.send(result);
     });
 
